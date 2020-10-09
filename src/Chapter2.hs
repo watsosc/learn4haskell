@@ -350,7 +350,7 @@ from it!
 ghci> :l src/Chapter2.hs
 -}
 subList :: Int -> Int -> [a] -> [a]
-subList start end xs 
+subList start end xs
   | start < 0 || end < start = []
   | otherwise = take (end-start+1) xs'
   where xs' = drop start xs
@@ -520,7 +520,7 @@ False
 -}
 isThird42 :: [Int] -> Bool
 isThird42 (_:_:42:_) = True
-isThird42 _ = False
+isThird42 _          = False
 
 
 {- |
@@ -625,7 +625,7 @@ Implement a function that duplicates each element of the list
 
 -}
 duplicate :: [a] -> [a]
-duplicate [] = []
+duplicate []     = []
 duplicate (x:xs) = x:x:(duplicate xs)
 
 
@@ -642,11 +642,11 @@ Write a function that takes elements of a list only on even positions.
 [2,3,4]
 -}
 takeEven :: [a] -> [a]
-takeEven xs = go True xs 
+takeEven xs = go True xs
   where
-    go _ [] = []
-    go True (x:xs) = x:(go False xs)
-    go False (_:xs) = go True xs 
+    go _ []         = []
+    go True (x:xs)  = x:(go False xs)
+    go False (_:xs) = go True xs
 
 
 {- |
@@ -871,7 +871,7 @@ list.
 🕯 HINT: Use the 'cycle' function
 -}
 rotate :: Int -> [a] -> [a]
-rotate n xs 
+rotate n xs
   | n < 0 = []
   | otherwise = take (length xs) $ drop n $ cycle xs
 
@@ -890,7 +890,7 @@ and reverses it.
   cheating!
 -}
 rewind :: [a] -> [a]
-rewind [] = []
+rewind []     = []
 rewind (x:xs) = rewind xs ++ [x]
 
 
