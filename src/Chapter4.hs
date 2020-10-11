@@ -508,7 +508,7 @@ instance Applicative (List) where
   Empty <*> _        = Empty
   (Cons f ys) <*> xs = combine (fmap f xs) (ys <*> xs)
 
-
+-- the final list ends up backwards, but that's ok for me
 combine :: List a -> List a -> List a
 combine ws Empty       = ws
 combine ws (Cons z zs) = combine (Cons z ws) zs
@@ -623,8 +623,17 @@ concepts in the end.
 Implement the 'Monad' instance for our 'Secret' type.
 -}
 instance Monad (Secret e) where
+    return :: a -> Secret e a
+    return x = Reward x
+
     (>>=) :: Secret e a -> (a -> Secret e b) -> Secret e b
-    (>>=) = error "bind Secret: Not implemented!"
+    Trap e >>= _   = Trap e
+    Reward x >>= f = f x
+
+surprise :: (Integral a) => a -> Secret a a
+surprise x
+  | even x = Reward (x-1)
+  | otherwise = Trap x
 
 {- |
 =⚔️= Task 7
@@ -634,6 +643,26 @@ Implement the 'Monad' instance for our lists.
 🕯 HINT: You probably will need to implement a helper function (or
   maybe a few) to flatten lists of lists to a single list.
 -}
+instance Monad List where
+    return :: a -> List a
+    return x = Cons x Empty
+
+    (>>=) :: List a -> (a -> List b) -> List b
+    Empty >>= _ = Empty
+    xs >>= f    = flattenList (fmap f xs)
+
+-- lol the ordering of this list is a little nightmare
+flattenList :: List (List a) -> List a
+flattenList (Cons x Empty) = x
+flattenList (Cons x xs)    = combine x (flattenList xs)
+
+-- make it a little easier to build lists from ghci
+convertToList :: [a] -> List a
+convertToList = foldr (\x acc -> Cons x acc) Empty
+
+-- needed a function to test our monad with
+repeatThreeTimes :: a -> List a
+repeatThreeTimes x = (Cons x (Cons x (Cons x Empty)))
 
 
 {- |
@@ -653,7 +682,7 @@ Can you implement a monad version of AND, polymorphic over any monad?
 🕯 HINT: Use "(>>=)", "pure" and anonymous function
 -}
 andM :: (Monad m) => m Bool -> m Bool -> m Bool
-andM = error "andM: Not implemented!"
+andM mx my = mx >>= (\x -> my >>= (\y -> return (x && y)))
 
 {- |
 =🐉= Task 9*: Final Dungeon Boss
@@ -696,6 +725,42 @@ Specifically,
    subtree of a tree
  ❃ Implement the function to convert Tree to list
 -}
+
+data Tree a
+  = Leaf a
+  | Node (Tree a) (Tree a)
+  deriving (Show)
+
+instance Functor Tree where
+  fmap :: (a -> b) -> Tree a -> Tree b
+  fmap f (Leaf x)          = Leaf $ f x
+  fmap f (Node left right) = Node (fmap f left) (fmap f right)
+
+instance Applicative Tree where
+  pure :: a -> Tree a
+  pure = Leaf
+
+  (<*>) :: Tree (a -> b) -> Tree a -> Tree b
+  Leaf f <*> Leaf x = Leaf $ f x
+  Leaf f <*> y      = fmap f y
+  Node x y <*> z    = Node (x <*> z) (y <*> z)
+
+instance Monad Tree where
+  return :: a -> Tree a
+  return = Leaf
+
+  (>>=) :: Tree a -> (a -> Tree b) -> Tree b
+  Leaf x >>= f   = f x
+  Node x y >>= f = Node (x >>= f) (y >>= f)
+
+
+treeToList :: Tree a -> [a]
+treeToList (Leaf x)          = [x]
+treeToList (Node left right) = treeToList left ++ treeToList right
+
+reverseTree :: Tree a -> Tree a
+reverseTree (Leaf x)          = Leaf x
+reverseTree (Node left right) = Node (reverseTree right) (reverseTree left)
 
 
 {-
